@@ -1,11 +1,12 @@
 import numpy as np
+from scipy.stats import t
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
 from sklearn.linear_model import RidgeCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 
-
+prop_cycle = plt.rcParams['axes.prop_cycle']
 
 
 # biais pour l'estimateur de variance - covariance
@@ -238,7 +239,7 @@ def performances_methods(X_simu_AMOC, X_obs_AMOC, X_simu, X_obs, Y_simu):
         ridge = model_RidgeCV_noisy(Cov_obs=Cov_obs_)
         ridge.fit(X_simu_, Y_simu)
         ridge_prediction = ridge.predict(X_obs_.reshape(1,-1))[0]
-        ridge_LOO  = LOO(X_simu_, Y_simu, model_RidgeCV_noisy(Cov_obs=Cov_obs_), display=True)
+        ridge_LOO  = LOO(X_simu_, Y_simu, model_RidgeCV_noisy(Cov_obs=Cov_obs_), display=False)
 
         print("RF\n")
         RF = model_RF(Cov_obs=Cov_obs_)
@@ -266,4 +267,9 @@ def performances_methods(X_simu_AMOC, X_obs_AMOC, X_simu, X_obs, Y_simu):
         list_list_std_without.append(list_std_without)
         list_list_LOO.append(list_LOO)
         
-    return name_methods, list_list_predictions, list_list_std_without, list_list_LOO
+    return name_methods, list_list_predictions, list_list_std_without, list_list_LOO, poids_wA
+
+
+
+
+

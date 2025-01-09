@@ -218,6 +218,7 @@ def import_TOS_SOS_obs(years_to_select, display=True):
 
 
 def region_average_TOS_SOS_obs(longitudes, latitudes,
+                               X_simu_perSample_perYear_perFeature,
                                ObsData_perVar_perYear_perCell_, ObsVar_perVar_perYear_perCell_,
                                area_perLat_per_Lon, list_name_per_var,
                                obs_times, mask_perVar,
