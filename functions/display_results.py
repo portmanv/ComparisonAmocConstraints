@@ -7,7 +7,7 @@ prop_cycle = plt.rcParams['axes.prop_cycle']
 
 
 
-def plot_performances(name_methods, scenario, X_choice, anomalie_Y,
+def plot_performances(name_methods, scenario, X_choice, anomalie_Y, name_Y,
                       list_list_predictions, list_list_std_without, list_list_LOO,
                       probability=0.90):
     z = t.interval(probability, np.inf, loc=0, scale=1)[1]
@@ -130,7 +130,6 @@ def plot_performances(name_methods, scenario, X_choice, anomalie_Y,
 
 
 
-
 def define_color_and_marker(common_models, list_front_markers, list_back_markers,
                             based_on_institute=True, other_names=[], other_models=[]):
     
@@ -219,6 +218,7 @@ def display_univariate_WeightedAverage_LinearRegression(X_simu_AMOC, X_simu, Y_s
     #line3 = plt.axhline(y=uni_wA_pred, linestyle='dotted', color='black',
     #                   label="prediction ({} Sv)".format(np.round(ypred_obs, 1)))
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    xmin, xmax = plt.gca().get_xlim()
     plt.errorbar(xmin+xmargin, uni_wA_pred, yerr=std_err_wA, capsize=7, color="black", lw=2, alpha=0.8, fmt="_",
                  label="{:.1f} ".format(uni_wA_pred)+r"$\pm$"+" {:.1f} Sv".format(std_err_wA)) # r"$\hat{f}(x_0)\pm \hat{\sigma}_{\varepsilon}$")
     #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

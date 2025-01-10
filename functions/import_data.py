@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from functools import reduce
 
-from functions import display_map
+from functions import display_map, nanaverage, nanstd
 prop_cycle = plt.rcParams['axes.prop_cycle']
 
 
@@ -221,7 +221,7 @@ def region_average_TOS_SOS_obs(longitudes, latitudes,
                                X_simu_perSample_perYear_perFeature,
                                ObsData_perVar_perYear_perCell_, ObsVar_perVar_perYear_perCell_,
                                area_perLat_per_Lon, list_name_per_var,
-                               obs_times, mask_perVar,
+                               obs_times, mask_perVar, final_weight_per_sample, years_to_select,
                                display=False):
 
     #-------------------------------------- Definition of the spatial regions

@@ -92,7 +92,7 @@ def nanstd(data, weights=None, axis=None):
 
 
 
-from IPython.display import display
+
 
 def display_number_of_runs(final_name_samples, display=True):
     nb_samples = len(final_name_samples)
@@ -109,6 +109,7 @@ def display_number_of_runs(final_name_samples, display=True):
     data = np.concatenate((unique_models.reshape(-1,1), counter.reshape(-1,1)), axis=1)
     df = pd.DataFrame(data, columns=["name model", "number of runs"], index=np.arange(1,len(data)+1))
     if display:
+        from IPython.display import display
         display(df)
 
     return final_name_models, final_weight_per_sample
