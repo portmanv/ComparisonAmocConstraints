@@ -216,7 +216,6 @@ def import_TOS_SOS_obs(years_to_select, display=True):
 
 
 
-
 def region_average_TOS_SOS_obs(longitudes, latitudes,
                                X_simu_perSample_perYear_perFeature,
                                ObsData_perVar_perYear_perCell_, ObsVar_perVar_perYear_perCell_,
@@ -234,7 +233,7 @@ def region_average_TOS_SOS_obs(longitudes, latitudes,
                          [-60, 20, -40, -15],
                          [30, 110, -30, 20],
                          [-130, -90, -10, 10]]
-
+    
     name_perBox = ["Nordic Seas", "Labrador", "Subpolar\nEast", "Subtropical",
                    "Tropical North", "Tropical South", "Atlantic South", "Indian Ocean", "Nino"]
 
