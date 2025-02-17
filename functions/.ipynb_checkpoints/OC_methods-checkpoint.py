@@ -129,8 +129,6 @@ class model_RL_noisy():
         
         var = np.var(epsilon) + np.matmul(self.b1.T, np.matmul(self.Cov_obs, self.b1))
         return np.sqrt(var)[0,0]
-    
-    
 
 
 
@@ -139,10 +137,10 @@ class model_RidgeCV_noisy():
         self.name_model  ="LR-Ridge"
         self.Cov_obs     = kwargs['Cov_obs']
         self.list_alphas = list_alphas
-        self.model = RidgeCV(alphas=list_alphas)
+        self.model       = RidgeCV(alphas=list_alphas)
 
     def fit(self, X_simu, Y_simu):
-        self.scaler = StandardScaler()
+        self.scaler = StandardScaler(with_mean=False)
         X_simu_n    = self.scaler.fit_transform(X_simu)
         self.model.fit(X_simu_n, Y_simu)
         return self
@@ -151,6 +149,8 @@ class model_RidgeCV_noisy():
         X_obs_n = self.scaler.transform(X_obs)
         return self.model.predict(X_obs_n)
 
+
+
 class model_MMM():
     def fit(self, X_simu, Y_simu):
         self.pred = np.mean(Y_simu)
@@ -158,7 +158,9 @@ class model_MMM():
         
     def predict(self, X_obs, **kwargs):
         return self.pred
-    
+
+
+
 class model_RF():
     def __init__(self, n_estimators=500, max_depth=None, max_features="sqrt", **kwargs):
         self.name_model = "RF"
@@ -177,6 +179,7 @@ class model_RF():
     
     def analytic_var(self, X_simu, Y_simu, X_obs):
         return np.nan
+
 
 
 def LOO(X_simu, Y_simu, regression_model, display=False, return_LOOperFold=False):

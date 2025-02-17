@@ -225,14 +225,14 @@ def region_average_TOS_SOS_obs(longitudes, latitudes,
 
     #-------------------------------------- Definition of the spatial regions
     lonlat_lim_perBox = [[-30, 30, 65, 80],
-                         [-70, -35, 45, 65],
-                         [-40, 0, 45, 65],
-                         [-90, 0, 15, 45],
-                         [-70, 10, 0, 15],
-                         [-50, 20, -15, 0],
-                         [-60, 20, -40, -15],
-                         [30, 110, -30, 20],
-                         [-130, -90, -10, 10]]
+                     [-70, -40, 45, 65],
+                     [-40, 0, 45, 65],
+                     [-90, 0, 15, 45],
+                     [-70, 10, 0, 15],
+                     [-50, 20, -15, 0],
+                     [-60, 20, -40, -15],
+                     [30, 110, -30, 20],
+                     [-130, -90, -10, 10]]
     
     name_perBox = ["Nordic Seas", "Labrador", "Subpolar\nEast", "Subtropical",
                    "Tropical North", "Tropical South", "Atlantic South", "Indian Ocean", "Nino"]
@@ -347,7 +347,7 @@ def display_regions(mask_perVar, name_perBox, list_idCell_perFeature, list_id_bo
 
     plt.figure(figsize=(15*1.2,7*1.2), dpi=400)
 
-    ax = plt.axes(projection=ccrs.PlateCarree())
+    ax = plt.axes(projection=ccrs.Robinson())
 
     translate_image[np.isnan(translate_image)] = 0
     #ax.imshow(translate_image, interpolation='none', cmap=cmap)
@@ -373,8 +373,7 @@ def display_regions(mask_perVar, name_perBox, list_idCell_perFeature, list_id_bo
     #plt.xlabel("longitude", fontsize=None)
 
     displayed_lonlat = np.matmul(flipped_longitudes.reshape(-1,1), flipped_latitudes.reshape(1,-1))
-
-
+    
     k = 0
     for id_feature in range(nb_features):
         if list_id_var_perFeature[id_feature]==0:
@@ -382,19 +381,21 @@ def display_regions(mask_perVar, name_perBox, list_idCell_perFeature, list_id_bo
             id_cells = list_idCell_perFeature[id_feature]
             color    = list_colors[id_box]
             [middle_lon, middle_lat] = middle_cell_perBox[id_box]
+
+            id_lon = np.argmin(np.abs(flipped_longitudes-middle_lon))
+            id_lat = np.argmin(np.abs(flipped_latitudes-middle_lat))
+            lon = flipped_longitudes[id_lon]
+            lat = flipped_latitudes[id_lat]
+            geodetic = ccrs.Geodetic()
+            ad_lon_t, ad_lat_t = ccrs.Robinson().transform_point(lon, lat, geodetic)
+            
             rotation = 0
-            if id_box==1:
-                middle_lon += 3
-                rotation = -33
-            elif id_box==4:
-                middle_lon -= 4
-            elif id_box==5:
-                middle_lon += 2
+
             xmin, xmax, ymin, ymax = np.copy(lonlat_lim_perBox[id_box])
-            txt = ax.text(middle_lon, middle_lat, name_perBox[id_box], ha='center',va='center',
+            txt = ax.text(ad_lon_t, ad_lat_t, name_perBox[id_box], ha='center',va='center', transform=ccrs.Robinson(),
                      color="white", fontsize=15, zorder=1000, rotation=rotation) #, weight="bold"
             import matplotlib.patheffects as PathEffects
-            txt.set_path_effects([PathEffects.withStroke(linewidth=2, foreground='black')])
+            txt.set_path_effects([PathEffects.withStroke(linewidth=5, foreground='black')])
             
             if k%2==0: hatch='/'
             else: hatch='\\'
@@ -408,4 +409,3 @@ def display_regions(mask_perVar, name_perBox, list_idCell_perFeature, list_id_bo
 
     #plt.title("Definition of spatial regions", fontsize=18)#, weight="bold")
     plt.show()
-
