@@ -6,6 +6,7 @@ from sklearn.linear_model import LinearRegression
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
 
+from functions import reverse_mask
 
 prop_cycle = plt.rcParams['axes.prop_cycle']
 
