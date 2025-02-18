@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Nov 14 14:08:47 2022
-
-@author: vport
-"""
-
 import numpy as np
 import netCDF4 as nc
 import pandas as pd
@@ -69,45 +62,31 @@ def display_map(vector, anti_spatial_mask, title="", cmap=None, vmin=None, vmax=
     if return_image:
         return translate_image
 
-
-
-
-
 def nanaverage(data, weights=None, axis=None):
-    
     masked_data = np.ma.masked_array(data, np.isnan(data))
-
-    average = np.ma.average(masked_data, axis=axis, weights=weights)
-    result = average.filled(np.nan)
+    average     = np.ma.average(masked_data, axis=axis, weights=weights)
+    result      = average.filled(np.nan)
     return result
 
 def nanstd(data, weights=None, axis=None):
-    
     masked_data = np.ma.masked_array(data, np.isnan(data))
-
-    average = np.ma.average(masked_data, axis=axis, weights=weights)
-    result = average.filled(np.nan)
-    std = np.sqrt(np.ma.average((data-average)**2, axis=axis, weights=weights))
+    average     = np.ma.average(masked_data, axis=axis, weights=weights)
+    result      = average.filled(np.nan)
+    std         = np.sqrt(np.ma.average((data-average)**2, axis=axis, weights=weights))
     return std
 
-
-
-
-
 def display_number_of_runs(final_name_samples, display=True):
-    nb_samples = len(final_name_samples)
-
-    final_name_models = [final_name_samples[id_sample].split('_r')[0] for id_sample in range(nb_samples)]
-
-    unique_models, counter = np.unique(final_name_models, return_counts=True)
-
+    nb_samples              = len(final_name_samples)
+    final_name_models       = [final_name_samples[id_sample].split('_r')[0] for id_sample in range(nb_samples)]
+    unique_models, counter  = np.unique(final_name_models, return_counts=True)
     final_weight_per_sample = np.nan*np.zeros(nb_samples)
+    
     for id_sample in range(nb_samples):
         nb_runs = counter[final_name_models[id_sample]==unique_models][0]
         final_weight_per_sample[id_sample] = 1/nb_runs
 
     data = np.concatenate((unique_models.reshape(-1,1), counter.reshape(-1,1)), axis=1)
-    df = pd.DataFrame(data, columns=["name model", "number of runs"], index=np.arange(1,len(data)+1))
+    df   = pd.DataFrame(data, columns=["name model", "number of runs"], index=np.arange(1,len(data)+1))
     if display:
         from IPython.display import display
         display(df)

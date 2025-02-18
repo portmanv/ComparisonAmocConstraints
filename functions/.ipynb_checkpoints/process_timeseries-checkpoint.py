@@ -1,7 +1,5 @@
 import numpy as np
 
-
-
 def import_scenario_AMOC(scenario, list_models_to_remove=[]):
     if scenario in ["ssp126", "ssp245", "ssp585"]:
         name_samples = np.load("../data/multiruns/name_samples_{}.npy".format(scenario))

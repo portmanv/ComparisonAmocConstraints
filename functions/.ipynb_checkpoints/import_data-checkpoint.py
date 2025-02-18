@@ -1,12 +1,9 @@
-
-
 import numpy as np
 import matplotlib.pyplot as plt
 from functools import reduce
 
 from functions import display_map, nanaverage, nanstd
 prop_cycle = plt.rcParams['axes.prop_cycle']
-
 
 
 def import_CMIP6_TOS_SOS(scenario, years_to_select):
@@ -20,7 +17,6 @@ def import_CMIP6_TOS_SOS(scenario, years_to_select):
     name_samples_perVar   = []
 
     # Import tos and then sos
-
     for var in list_name_per_var:
         data = np.load("../data/multiruns/"+"timeserie_"+var+"_"+scenario+"/data_perSample_perBox_perYear.npy")
         name_runs = np.load("../data/multiruns/"+"timeserie_"+var+"_"+scenario+"/name_run_perSample.npy")
@@ -51,11 +47,7 @@ def import_CMIP6_TOS_SOS(scenario, years_to_select):
 
     return X_simu_perSample_perYear_perFeature_bis, name_samples_X, nb_var, list_name_per_var
 
-
-
-
 def import_CMIP6_AMOC(scenario):
-    
     # Import historical simulations
     metric = "AMOC"
 
@@ -81,8 +73,6 @@ def import_CMIP6_AMOC(scenario):
     
     return hist_times, hist_name_samples, hist_AMOC, ssp_times, ssp245_name_samples, ssp245_AMOC
 
-
-
 def select_common_members(name_samples_X, hist_name_samples, ssp245_name_samples,
                          X_simu_perSample_perYear_perFeature_bis,
                          years_to_select, hist_times, ssp_times,
@@ -94,7 +84,6 @@ def select_common_members(name_samples_X, hist_name_samples, ssp245_name_samples
     _, out_id_samples_X, in_id_samples_X       = np.intersect1d(final_name_samples, name_samples_X, return_indices=True)
     _, out_id_samples_hist, in_id_samples_hist = np.intersect1d(final_name_samples, hist_name_samples, return_indices=True)
     _, out_id_samples_ssp, in_id_samples_ssp   = np.intersect1d(final_name_samples, ssp245_name_samples, return_indices=True)
-
     X_simu_perSample_perYear_perFeature        = X_simu_perSample_perYear_perFeature_bis[in_id_samples_X]
 
     # Select only the times common between TOS, SOS and AMOC
@@ -109,9 +98,6 @@ def select_common_members(name_samples_X, hist_name_samples, ssp245_name_samples
     times_Y = np.copy(years_to_select)
 
     return X_simu_perSample_perYear_perFeature, Y, times_Y, final_name_samples
-
-
-
 
 import scipy.io
 def import_AMOC_obs(display=True):
@@ -163,8 +149,7 @@ def import_TOS_SOS_obs(years_to_select, display=True):
     obs_sos_perYear_perCell     = np.load("../data/obs_SST_SSS/masked_sos_obs.npy")
     var_obs_tos_perYear_perCell = np.load("../data/obs_SST_SSS/masked_tos_obs_var.npy")
     var_obs_sos_perYear_perCell = np.load("../data/obs_SST_SSS/masked_sos_obs_var.npy")
-
-
+    
     #------------------------------------------------------------ Display
     mean_obs_tos_perCell = np.mean(obs_tos_perYear_perCell, axis=0)
     mean_obs_sos_perCell = np.mean(obs_sos_perYear_perCell, axis=0)
@@ -182,8 +167,6 @@ def import_TOS_SOS_obs(years_to_select, display=True):
     ObsVar_perVar_perYear_perCell  = [var_obs_tos_perYear_perCell, var_obs_sos_perYear_perCell]
     ObsTimes_perVar                = [obs_tos_times, obs_sos_times]
     
-    
-    
     #------------------------------------------------------------ Pooling the spatial masks and the times
     obs_times = np.arange(1900, 2022+1)
 
@@ -196,7 +179,6 @@ def import_TOS_SOS_obs(years_to_select, display=True):
         np.nan*np.zeros((len(obs_times), np.sum(ObsData_mask_perVar[id_var]))) for id_var in range(nb_var)]
 
     for id_var in range(nb_var):
-
         #-------------- Find the shared spatial mask 
         mask_obs           = ObsData_mask_perVar[id_var]
         mask_perVar.append(mask_obs)
@@ -208,9 +190,7 @@ def import_TOS_SOS_obs(years_to_select, display=True):
 
         #-------------- Storage of the intersection   
         ObsData_perVar_perYear_perCell_[id_var][times_id_out_obs] = ObsData_perVar_perYear_perCell[id_var][times_id_in_obs]
-        ObsVar_perVar_perYear_perCell_[id_var][times_id_out_obs] = ObsVar_perVar_perYear_perCell[id_var][times_id_in_obs]
-
-
+        ObsVar_perVar_perYear_perCell_[id_var][times_id_out_obs]  = ObsVar_perVar_perYear_perCell[id_var][times_id_in_obs]
 
     return ObsData_perVar_perYear_perCell_, ObsVar_perVar_perYear_perCell_, obs_times, mask_perVar
 
@@ -241,15 +221,13 @@ def region_average_TOS_SOS_obs(longitudes, latitudes,
     if nb_box!= len(lonlat_lim_perBox):
         print("issue !")
 
-    
     colors_perBox = prop_cycle.by_key()['color'][:nb_box]
-    
     
     #-------------------------------------- Averaging for each region
     nb_var   = 2
     nb_times = len(obs_times)
-    X_obs_perYear_perFeature           = np.nan*np.zeros((nb_times, nb_var*nb_box))
-    X_obsVar_perYear_perFeature        = np.nan*np.zeros((nb_times, nb_var*nb_box))
+    X_obs_perYear_perFeature    = np.nan*np.zeros((nb_times, nb_var*nb_box))
+    X_obsVar_perYear_perFeature = np.nan*np.zeros((nb_times, nb_var*nb_box))
 
     id_feature = 0
     list_id_box_perFeature = []
@@ -266,14 +244,14 @@ def region_average_TOS_SOS_obs(longitudes, latitudes,
 
         for id_var in range(nb_var):
             # Sélection des cellules correspondant à la zone
-            ObsData_perYear_perCell_           = ObsData_perVar_perYear_perCell_[id_var]
-            ObsVar_perYear_perCell_            = ObsVar_perVar_perYear_perCell_[id_var]
+            ObsData_perYear_perCell_ = ObsData_perVar_perYear_perCell_[id_var]
+            ObsVar_perYear_perCell_  = ObsVar_perVar_perYear_perCell_[id_var]
 
-            mask_common = mask_perVar[id_var]
+            mask_common     = mask_perVar[id_var]
             idCells_to_keep = np.matmul(lat_to_keep.reshape(-1,1), lon_to_keep.reshape(1,-1))[mask_common]
 
             mask_region = np.logical_and(np.matmul(lat_to_keep.reshape(-1,1), lon_to_keep.reshape(1,-1)), mask_common)
-            areas = area_perLat_per_Lon[mask_region]
+            areas       = area_perLat_per_Lon[mask_region]
             if display:
                 print("{} cells".format(np.sum(mask_region)))
 
@@ -281,7 +259,7 @@ def region_average_TOS_SOS_obs(longitudes, latitudes,
                                                   ObsData_perYear_perCell_[:, idCells_to_keep],
                                                   weights=areas, axis=1)
 
-            # Variance de la somme (indépendance spatiale) = (somme variances)/N² = (moyenne)/N
+            # Variance of a sum (indenpendence) = (sum variances)/N² = (mean)/N
             X_obsVar_perYear_perFeature[:, id_feature] = np.average(
                                                   ObsVar_perYear_perCell_[:, idCells_to_keep],
                                                   weights=areas, axis=1)/len(idCells_to_keep)
@@ -298,8 +276,6 @@ def region_average_TOS_SOS_obs(longitudes, latitudes,
         (nb_samples, nb_times, nb_features) = X_simu_perSample_perYear_perFeature.shape
         for id_feature in range(nb_features):
             plt.figure()
-            #plt.subplot(nb_features, 1, id_feature+1)
-
             mean_multi_model = nanaverage(X_simu_perSample_perYear_perFeature[:, :, id_feature], axis=0, weights=final_weight_per_sample)
             std_multi_model = nanstd(X_simu_perSample_perYear_perFeature[:, :, id_feature], axis=0, weights=final_weight_per_sample)
             plt.plot(years_to_select, mean_multi_model)
@@ -342,20 +318,8 @@ def display_regions(mask_perVar, name_perBox, list_idCell_perFeature, list_id_bo
     plt.figure(figsize=(15*1.2,7*1.2), dpi=400)
 
     ax = plt.axes(projection=ccrs.Robinson())
-
-    #translate_image[np.isnan(translate_image)] = 0
     ax.pcolormesh(longitudes, latitudes, map_coefs, cmap=cmap, # shading='auto', 
                              transform=ccrs.PlateCarree())
-
-    #map_coefs_nonNan = np.copy(map_coefs)
-    #map_coefs_nonNan[np.isnan(map_coefs_nonNan)] = -1      
-    #ax.contour(longitudes, latitudes, map_coefs_nonNan, np.unique(list_id_box_perFeature)+0.5, colors=['black'],
-    #        origin='image', linewidths=1, transform=ccrs.PlateCarree(), zorder=100)
-
-    #ax.coastlines()
-    #ax.add_feature(cfeature.LAND, facecolor="white")
-    #ax.add_feature(cfeature.LAKE, facecolor="white")
-    #ax.add_feature(cfeature.OCEAN,facecolor=("lightblue"))
     ax.add_feature(cfeature.LAND, edgecolor='black', zorder=12)#, facecolor="white")
 
     displayed_lonlat = np.matmul(longitudes.reshape(-1,1), latitudes.reshape(1,-1))
@@ -385,15 +349,7 @@ def display_regions(mask_perVar, name_perBox, list_idCell_perFeature, list_id_bo
             
             if k%2==0: hatch='/'
             else: hatch='\\'
-
-            if False:
-                ax.add_patch(matplotlib.patches.Rectangle((xmin, ymin), xmax-xmin, ymax-ymin,
-                                                          hatch=hatch, fill=False, snap=False,
-                                                          color="black", alpha=0.2))
-
             k += 1
-
-    #plt.title("Definition of spatial regions", fontsize=18)#, weight="bold")
     plt.show()
 
 

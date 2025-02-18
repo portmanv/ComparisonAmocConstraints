@@ -14,7 +14,7 @@ def compute_trend_3d_data(data_per_model_per_time_per_cell, times):
     reg = LinearRegression()
     
     for id_model in range(nb_models):
-        # Pour le modèle, ne considère que les temps recouverts (pas de nan)
+        # Get rid of missing data (np.nan)
         times_to_keep = np.logical_not(np.sum(np.isnan(data_per_model_per_time_per_cell[id_model]), axis=1))
         x_true        = times[times_to_keep].astype('int').reshape(-1, 1)
         
@@ -23,7 +23,7 @@ def compute_trend_3d_data(data_per_model_per_time_per_cell, times):
             if np.sum(times_to_keep)<2:
                 trend=np.nan
             else:
-                # apprentissage sur 1 échantillon
+                # Learn on one sample
                 y_true = time_serie.reshape(-1, 1)
 
                 reg.fit(x_true, y_true)
@@ -102,17 +102,12 @@ def create_Y_AMOC_feature(anomalie_Y, min_Y, max_Y,
         Y_simu_anom = np.nanmean(Y_anom[:, times_to_mean], axis=1)
 
     if anomalie_Y:
-        #name_Y = "AMOC slow-down % {}-{}\n(anomalie ref {}-{})".format(min_Y, max_Y, min_Y_ref, max_Y_ref)
         name_Y = "mean AMOC anomaly {}-{}\n(ref {}-{})".format(min_Y, max_Y, min_Y_ref, max_Y_ref)
         Y_simu = Y_simu_anom
     else:
         Y_simu = np.nanmean(Y[:, times_to_mean], axis=1)
         name_Y = "mean AMOC {}-{}".format(min_Y, max_Y)
-
-    #print(np.nanmin(Y_ref), np.nanmax(Y_ref), np.nanmean(Y_ref), np.nanstd(Y_ref))
-    #print(np.nanmin(Y_simu_anom), np.nanmax(Y_simu_anom))
-    #print(np.nanmin(Y_simu), np.nanmax(Y_simu), np.nanmean(Y_simu), np.nanstd(Y_simu))
-    
+        
     return Y_simu, name_Y, Y_ref
 
 

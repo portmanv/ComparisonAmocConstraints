@@ -9,7 +9,6 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 prop_cycle = plt.rcParams['axes.prop_cycle']
 
 
-# biais pour l'estimateur de variance - covariance
 ddof = 0
 def cross_cov(X,Y, ddof=0):
     n, p_X = X.shape
@@ -231,7 +230,6 @@ def performances_methods(X_simu_AMOC, X_obs_AMOC, X_simu, X_obs, Y_simu, return_
         wA.fit(X_simu_,Y_simu)
         wA_prediction  = wA.predict(X_obs_.reshape(1,-1))
         poids_wA.append(np.copy(wA.w))
-        #!!!!!! on prédit le modèle sachant que c'est l'observation, du coup on le prédit parfaitement ?
         wA_predictions = [wA.predict(X_simu_[id_model].reshape(1,-1)) for id_model in range(len(X_simu_))]
         wA_LOO         = LOO(X_simu_, Y_simu, model_wAverage(Cov_obs=Cov_obs_), return_LOOperFold=return_LOOperFold)
         wA.fit(X_simu_,Y_simu)
@@ -254,18 +252,16 @@ def performances_methods(X_simu_AMOC, X_obs_AMOC, X_simu, X_obs, Y_simu, return_
         RF_prediction = RF.predict(X_obs_.reshape(1,-1))[0]
         RF_LOO = LOO(X_simu_, Y_simu, model_RF(Cov_obs=Cov_obs_), return_LOOperFold=return_LOOperFold)
 
-        # RMSE pour tous, sans bruit d'obs
-        if True:
-            list_std_without = []
-            for model in [model_MMM(), model_wAverage(Cov_obs=Cov_obs_),
-                          model_RL_noisy(Cov_obs=Cov_obs_),
-                          model_RidgeCV_noisy(Cov_obs=Cov_obs_),
-                          model_RF(Cov_obs=Cov_obs_)]:
-                model.fit(X_simu_, Y_simu)
-                predictions = np.array([model.predict(X_simu_[id_model].reshape(1,-1)).flatten() for id_model in range(len(X_simu_))])
+        list_std_without = []
+        for model in [model_MMM(), model_wAverage(Cov_obs=Cov_obs_),
+                      model_RL_noisy(Cov_obs=Cov_obs_),
+                      model_RidgeCV_noisy(Cov_obs=Cov_obs_),
+                      model_RF(Cov_obs=Cov_obs_)]:
+            model.fit(X_simu_, Y_simu)
+            predictions = np.array([model.predict(X_simu_[id_model].reshape(1,-1)).flatten() for id_model in range(len(X_simu_))])
 
-                RMSE = np.sqrt(np.mean(np.square(Y_simu.reshape(-1,1)-predictions)))
-                list_std_without.append(RMSE)
+            RMSE = np.sqrt(np.mean(np.square(Y_simu.reshape(-1,1)-predictions)))
+            list_std_without.append(RMSE)
 
         list_predictions = [MMM_prediction, wA_prediction, lr_prediction, ridge_prediction, RF_prediction]
         list_LOO         = [MMM_LOO, wA_LOO, lr_LOO, ridge_LOO, RF_LOO]
