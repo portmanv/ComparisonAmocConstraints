@@ -3,7 +3,12 @@ from scipy.stats import t
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
+import cartopy.feature as cfeature
+import cartopy.crs as ccrs
+
+
 prop_cycle = plt.rcParams['axes.prop_cycle']
+
 
 
 
@@ -222,14 +227,9 @@ def display_univariate_WeightedAverage_LinearRegression(X_simu_AMOC, X_simu, Y_s
         line2 = plt.fill_betweenx([np.min(Y_simu), np.max(Y_simu)], np.mean(X_simu_AMOC)-np.std(X_simu_AMOC),
                       np.mean(X_simu_AMOC)+np.std(X_simu_AMOC),
                       alpha=0., hatch="//", label='multi-model mean $\pm \sigma$', linewidth=12)
-    #line3 = plt.axhline(y=uni_wA_pred, linestyle='dotted', color='black',
-    #                   label="prediction ({} Sv)".format(np.round(ypred_obs, 1)))
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     xmin, xmax = plt.gca().get_xlim()
     plt.errorbar(xmin+xmargin, uni_wA_pred, yerr=std_err_wA, capsize=7, color="black", lw=2, alpha=0.8, fmt="_",
                  label="{:.1f} ".format(uni_wA_pred)+r"$\pm$"+" {:.1f} Sv".format(std_err_wA)) # r"$\hat{f}(x_0)\pm \hat{\sigma}_{\varepsilon}$")
-    #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    #legend1 = plt.legend(handles=[line1, line3]) #line2
     legend1 = plt.legend()
     plt.ylabel(name_Y+" (Sv)")
     plt.xlabel(name_X_AMOC+" (Sv)")
@@ -241,11 +241,7 @@ def display_univariate_WeightedAverage_LinearRegression(X_simu_AMOC, X_simu, Y_s
     list_front_markers = ["<", ">", "^", "v", "o", "s", "p", "*", "h", "H", "d", "P", "X"] #, "+", "x", "*", "o"
     list_back_markers  = ["o", "s", "d"]
 
-
-    #common_models, id_common_AMOC_models, _ = np.intersect1d(
-    #        AMOC_data_name_models, final_name_models, return_indices=True)
     list_color, list_front_marker, list_back_marker = define_color_and_marker(final_name_models, list_front_markers, list_back_markers)
-    #list_color, list_front_marker, list_back_marker = np.array(list_color)[id_common_AMOC_models], np.array(list_front_marker)[id_common_AMOC_models], np.array(list_back_marker)[id_common_AMOC_models]
 
 
     list_points = []
@@ -257,8 +253,6 @@ def display_univariate_WeightedAverage_LinearRegression(X_simu_AMOC, X_simu, Y_s
         a, = plt.plot(X_simu_AMOC[id_model], Y_simu[id_model], marker=back_marker, c=color, alpha=alpha, markersize=10, linewidth=0.)
         b, = plt.plot(X_simu_AMOC[id_model], Y_simu[id_model], marker=front_marker, label=final_name_models[id_model], c=color, alpha=1, linewidth=0.)
         list_points.append((a,b))
-
-    #legend2 = plt.legend(list_points, common_models, loc='center left', bbox_to_anchor=(1, 0.5), ncol=2)
 
     plt.gca().add_artist(legend1)
 
@@ -323,3 +317,125 @@ def display_univariate_WeightedAverage_LinearRegression(X_simu_AMOC, X_simu, Y_s
     plt.title("B. Linear regression")
     plt.tight_layout()
     plt.show()
+
+
+
+
+def display_importance_per_feature(mean_importance_perfeature,
+                                   mask_perVar, list_idCell_perFeature,
+                                   list_id_box_perFeature, list_id_var_perFeature,
+                                   latitudes, longitudes,
+                                   display_AMOC=False, shrink=1.0, nb_slots_cmap=10, impose_mM=0):
+    
+    fontsize = 20
+    
+    nb_lon = len(longitudes)
+    nb_lat = len(latitudes)
+    nb_features = len(mean_importance_perfeature)
+    indexes_sos = list(np.arange(1,nb_features, 2))
+    indexes_tos = list(np.arange(0,nb_features, 2))
+
+    mean_importance_perCell_tos = np.nan*np.zeros(np.sum(mask_perVar[0]))
+    mean_importance_perCell_sos = np.nan*np.zeros(np.sum(mask_perVar[1]))
+
+    for id_feature in range(nb_features-1):
+        id_cells = list_idCell_perFeature[id_feature]
+        id_box   = list_id_box_perFeature[id_feature]
+        if list_id_var_perFeature[id_feature]==0:
+            mean_importance_perCell_tos[id_cells] = mean_importance_perfeature[id_feature]
+        elif list_id_var_perFeature[id_feature]==1:
+            mean_importance_perCell_sos[id_cells] = mean_importance_perfeature[id_feature]
+
+    map_coefs_tos = reverse_mask(mean_importance_perCell_tos, np.logical_not(mask_perVar[0]))
+    map_coefs_sos = reverse_mask(mean_importance_perCell_sos, np.logical_not(mask_perVar[1]))
+    #map_coefs_tos[np.isnan(map_coefs_tos)] = 0
+    #map_coefs_sos[np.isnan(map_coefs_sos)] = 0
+
+    mM = np.nanmax(np.abs(mean_importance_perfeature))
+    mM = (np.ceil(10*mM)+(np.ceil(10*mM)%2))/10
+
+    if impose_mM!=0:
+        mM = impose_mM
+    #mM = np.ceil(10*mM)/10
+    # Colormap
+    cmap = plt.cm.coolwarm
+    import matplotlib as mpl
+    cmaplist = [cmap(i) for i in range(cmap.N)]
+    cmap = mpl.colors.LinearSegmentedColormap.from_list(
+        'Custom cmap', cmaplist, cmap.N)
+    bounds = np.linspace(-mM, mM, nb_slots_cmap)
+    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+    
+
+    plt.figure()
+    #fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(13,2.5))
+    if display_AMOC:
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(5, 7), dpi=300, subplot_kw={'projection': ccrs.Robinson()})
+    else:
+        alpha = 1.8
+        #fig, (ax2, ax3) = plt.subplots(2, 1, figsize=(alpha*6, alpha*6))
+        fig, (ax3, ax2) = plt.subplots(1,2, figsize=(alpha*12, alpha*3), dpi=300, subplot_kw={'projection': ccrs.Robinson()})
+    
+    im = ax2.pcolormesh(longitudes, latitudes, map_coefs_tos, cmap=cmap, # shading='auto', 
+                             transform=ccrs.PlateCarree(), norm=norm)
+    ax2.add_feature(cfeature.LAND, edgecolor='black', zorder=12)#, facecolor="white")
+    
+    if False:
+        #ax2.set_xticks(ticks=np.arange(len(longitudes))[::60][1:], labels=flipped_longitudes[::60][1:])
+        #ax2.set_yticks(ticks=np.arange(len(latitudes))[::30][1:], labels=(flipped_latitudes+0.5)[::30][1:])
+        ax2.set_xticks([])
+        ax2.set_yticks([])
+        #ax2.set_ylabel("latitude", fontsize=None)
+        #ax2.set_xlabel("longitude", fontsize=None)
+    ax2.set_title("B. Correction on future AMOC (Sv)\ninduced by the sea surface "+ r"$\bf{temperature}$", fontsize=20)
+    #ax2.colorbar(shrink=0.6)
+    
+    im = ax3.pcolormesh(longitudes, latitudes, map_coefs_sos, cmap=cmap, # shading='auto', 
+                             transform=ccrs.PlateCarree(), norm=norm)
+    ax3.add_feature(cfeature.LAND, edgecolor='black', zorder=12)#, facecolor="white")
+
+    map_coefs_sos_noNan = np.copy(map_coefs_sos)
+    map_coefs_sos_noNan[np.isnan(map_coefs_sos_noNan)] = -1
+
+    if False:
+        #ax3.set_xticks(ticks=np.arange(len(longitudes))[::60][1:], labels=flipped_longitudes[::60][1:])
+        #ax3.set_yticks(ticks=np.arange(len(latitudes))[::30][1:], labels=(flipped_latitudes+0.5)[::30][1:])
+        ax3.set_xticks([])
+        ax3.set_yticks([])
+        #ax3.set_ylabel("latitude", fontsize=None)
+        #ax3.set_xlabel("longitude", fontsize=None)
+    ax3.set_title("A. Correction on future AMOC (Sv)\ninduced by the sea surface "+ r"$\bf{salinity}$", fontsize=fontsize)
+    
+    if display_AMOC:
+        im_bis = np.copy(translate_image)
+        im_bis[np.logical_not(np.isnan(im_bis))] = -1
+        ax1.pcolormesh(flipped_longitudes, flipped_latitudes, im_bis, cmap=cmap, # shading='auto', 
+                             transform=ccrs.PlateCarree(), norm=norm)
+        ax1.set_title("2005-2023 AMOC importance")
+        ax1.set_xticks([])
+        ax1.set_yticks([])
+        ax1.get_ylim()
+        id_ = np.argmin(np.abs(flipped_latitudes-26))
+        #ax1.axhline(y=id_) #, c=mean_importance_perfeature[-1], cmap="coolwarm", vmin=-mM, vmax=mM)
+        id_longitudes_kept = np.where(np.logical_and(flipped_longitudes>-80, flipped_longitudes<-15))[0]
+        ax1.scatter(id_longitudes_kept,
+                    np.repeat(id_, len(id_longitudes_kept)),
+                    c=np.repeat(mean_importance_perfeature[-1], len(id_longitudes_kept)),
+                    cmap="coolwarm", vmin=-mM, vmax=mM, s=5)
+
+        ax1.set_yticks(ticks=[id_], labels=["26°N"])
+        cbar = fig.colorbar(im, ax=[ax1, ax2, ax3], label="(Sv)", shrink=shrink, location='bottom')
+    else:
+        cbar = fig.colorbar(im, ax=[ax2, ax3], label="(Sv)", shrink=shrink, location='bottom')#, anchor=(0.5, 1.8))
+    cbar.set_label(label='(Sv)', size=fontsize, rotation=0)
+    cbar.ax.tick_params(labelsize=fontsize)
+    
+    #cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+    
+    #ax1.colorbar(shrink=0.6)
+
+    plt.subplots_adjust(left=None, bottom=0.3, right=None, top=8, wspace=0.03, hspace=None)
+    #plt.tight_layout()
+
+
+

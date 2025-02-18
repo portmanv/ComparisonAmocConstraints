@@ -325,7 +325,7 @@ def display_regions(mask_perVar, name_perBox, list_idCell_perFeature, list_id_bo
     nb_cells       = np.sum(mask)
     nb_box         = len(name_perBox)
     nb_features    = len(list_id_var_perFeature)
-    id_box_perCell = np.zeros(nb_cells, dtype=int)
+    id_box_perCell = np.nan*np.zeros(nb_cells, dtype=int)
 
     for id_feature in np.flip(np.arange(nb_features)):
         if list_id_var_perFeature[id_feature]==0:
@@ -337,42 +337,28 @@ def display_regions(mask_perVar, name_perBox, list_idCell_perFeature, list_id_bo
     cmap = matplotlib.colors.LinearSegmentedColormap.from_list("cmap_name", ['#D3D3D3']+list_colors, N=nb_box+1)
 
     map_coefs = reverse_mask(id_box_perCell, np.logical_not(mask))
-    nb_lat, nb_lon = map_coefs.shape 
-    
-    flipped_image      = np.flip(map_coefs, axis=0)
-    flipped_latitudes  = np.flip(latitudes)
-    translate_image    = np.concatenate((flipped_image[:, nb_lon//2:nb_lon], flipped_image[:, 0:nb_lon//2]), axis=1)
-    flipped_longitudes = np.concatenate((longitudes[nb_lon//2:nb_lon], longitudes[0:nb_lon//2])).astype(int)
-
+    nb_lat, nb_lon = map_coefs.shape
 
     plt.figure(figsize=(15*1.2,7*1.2), dpi=400)
 
     ax = plt.axes(projection=ccrs.Robinson())
 
-    translate_image[np.isnan(translate_image)] = 0
-    #ax.imshow(translate_image, interpolation='none', cmap=cmap)
-    ax.pcolormesh(flipped_longitudes, flipped_latitudes, translate_image, cmap=cmap, # shading='auto', 
+    #translate_image[np.isnan(translate_image)] = 0
+    ax.pcolormesh(longitudes, latitudes, map_coefs, cmap=cmap, # shading='auto', 
                              transform=ccrs.PlateCarree())
 
-    if False:
-        ax.set_xticks(ticks=np.arange(len(longitudes))[::20])
-        ax.set_xticklabels(flipped_longitudes[::20])
-        ax.set_yticks(ticks=np.arange(len(latitudes))[::30])
-        ax.set_yticklabels(flipped_latitudes[::30])
-    
-        ax.set_xticks([])
-        ax.set_yticks([])
+    #map_coefs_nonNan = np.copy(map_coefs)
+    #map_coefs_nonNan[np.isnan(map_coefs_nonNan)] = -1      
+    #ax.contour(longitudes, latitudes, map_coefs_nonNan, np.unique(list_id_box_perFeature)+0.5, colors=['black'],
+    #        origin='image', linewidths=1, transform=ccrs.PlateCarree(), zorder=100)
+
     #ax.coastlines()
     #ax.add_feature(cfeature.LAND, facecolor="white")
     #ax.add_feature(cfeature.LAKE, facecolor="white")
     #ax.add_feature(cfeature.OCEAN,facecolor=("lightblue"))
-    ax.add_feature(cfeature.LAND, edgecolor='black', zorder=12, facecolor="white")
+    ax.add_feature(cfeature.LAND, edgecolor='black', zorder=12)#, facecolor="white")
 
-
-    #plt.ylabel("latitude", fontsize=None)
-    #plt.xlabel("longitude", fontsize=None)
-
-    displayed_lonlat = np.matmul(flipped_longitudes.reshape(-1,1), flipped_latitudes.reshape(1,-1))
+    displayed_lonlat = np.matmul(longitudes.reshape(-1,1), latitudes.reshape(1,-1))
     
     k = 0
     for id_feature in range(nb_features):
@@ -382,10 +368,10 @@ def display_regions(mask_perVar, name_perBox, list_idCell_perFeature, list_id_bo
             color    = list_colors[id_box]
             [middle_lon, middle_lat] = middle_cell_perBox[id_box]
 
-            id_lon = np.argmin(np.abs(flipped_longitudes-middle_lon))
-            id_lat = np.argmin(np.abs(flipped_latitudes-middle_lat))
-            lon = flipped_longitudes[id_lon]
-            lat = flipped_latitudes[id_lat]
+            id_lon = np.argmin(np.abs(longitudes-middle_lon))
+            id_lat = np.argmin(np.abs(latitudes-middle_lat))
+            lon = longitudes[id_lon]
+            lat = latitudes[id_lat]
             geodetic = ccrs.Geodetic()
             ad_lon_t, ad_lat_t = ccrs.Robinson().transform_point(lon, lat, geodetic)
             
@@ -409,3 +395,6 @@ def display_regions(mask_perVar, name_perBox, list_idCell_perFeature, list_id_bo
 
     #plt.title("Definition of spatial regions", fontsize=18)#, weight="bold")
     plt.show()
+
+
+

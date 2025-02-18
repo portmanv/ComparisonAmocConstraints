@@ -1,7 +1,10 @@
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-from functions import nanaverage
+from import_data import import_CMIP6_TOS_SOS, import_CMIP6_AMOC, select_common_members, import_AMOC_obs, import_TOS_SOS_obs, region_average_TOS_SOS_obs, display_regions
+from functions import load_lat_lon_area, display_map, reverse_mask, nanaverage, nanstd, display_number_of_runs
+
+
 
 def compute_trend_3d_data(data_per_model_per_time_per_cell, times):
     (nb_models, nb_times, nb_cells) = data_per_model_per_time_per_cell.shape
@@ -145,4 +148,112 @@ def average_member_perModel(final_name_models, X_simu, Y_simu,
         
     return uniques_models, Y_simu_resampled, Y_ref_resampled, X_simu_resampled, X_simu_AMOC_resampled, X_AMOC_mean_1850_1900_resampled
 
+
+def construct_data_given_scenario(scenario,
+                                 X_choice, anomalie_Y, min_Y, max_Y,
+                                 min_Y_ref, max_Y_ref, min_X, max_X,
+                                 include_AMOC_in_predictors, return_all=False):
+    #================================================ Import data
+    #---- Import labels longitudes and latitudes
+    latitudes, longitudes, area_perLat_per_Lon = load_lat_lon_area("../data/area_r360x180.nc")
+    longitudes[longitudes>180] -= 360
+
+    #---- Import CMIP6 TOS and SOS
+    years_to_select = np.arange(1850, 2100+1)
+    [X_simu_perSample_perYear_perFeature_bis, name_samples_X, nb_var, list_name_per_var
+                ] = import_CMIP6_TOS_SOS(scenario, years_to_select)
+
+    #---- Import CMIP6 AMOC
+    [hist_times, hist_name_samples, hist_AMOC, ssp_times, ssp245_name_samples, ssp245_AMOC
+            ] = import_CMIP6_AMOC(scenario)
+
+    #---- Select only the members that are available for both TOS, SOS and AMOC
+    [X_simu_perSample_perYear_perFeature, Y, times_Y, final_name_samples
+            ] = select_common_members(name_samples_X, hist_name_samples, ssp245_name_samples,
+                             X_simu_perSample_perYear_perFeature_bis,
+                             years_to_select, hist_times, ssp_times,
+                             hist_AMOC, ssp245_AMOC)
+
+    #---- Import AMOC observations (RAPID)
+    obs_AMOC_times, obs_AMOC_values = import_AMOC_obs(display=False)
+
+    #---- Display the number of members given by each climate model
+    final_name_models, final_weight_per_sample = display_number_of_runs(final_name_samples, display=False)
+    
+    #---- Import TOS and SOS observations
+    [ObsData_perVar_perYear_perCell_, ObsVar_perVar_perYear_perCell_,
+     obs_times, mask_perVar
+            ] = import_TOS_SOS_obs(years_to_select, display=False)
+
+    [X_obs_perYear_perFeature, X_obsVar_perYear_perFeature,
+     name_perBox, list_idCell_perFeature, list_id_box_perFeature,
+     list_id_var_perFeature, colors_perBox,
+     middle_cell_perBox, list_name_perFeature, nb_box, lonlat_lim_perBox
+            ] = region_average_TOS_SOS_obs(longitudes, latitudes, X_simu_perSample_perYear_perFeature,
+                                   ObsData_perVar_perYear_perCell_, ObsVar_perVar_perYear_perCell_,
+                                   area_perLat_per_Lon, list_name_per_var, obs_times, mask_perVar,
+                                   final_weight_per_sample, years_to_select,
+                                   display=False)
+    
+    #================================================ Construct X and Y
+    #------- Construct X when it is univariate
+    [name_X_AMOC, X_simu_AMOC, X_obs_AMOC, X_AMOC_mean_1850_1900
+            ] = create_X_AMOC_feature(X_choice, Y, times_Y, obs_AMOC_values, obs_AMOC_times)
+
+    #------- Construct X when it is multivariate
+    X_obs, X_simu = create_X_TOS_SOS_features(X_choice, min_X, max_X, 
+                                              X_obs_perYear_perFeature, obs_times,
+                                              X_simu_perSample_perYear_perFeature, years_to_select)
+
+    #------- Construct Y
+    Y_simu, name_Y, Y_ref = create_Y_AMOC_feature(anomalie_Y, min_Y, max_Y,
+                              min_Y_ref, max_Y_ref,
+                              Y, years_to_select)
+
+    #------- Keep only samples (climate models) that contains no Nan (some data are missing)
+    model_to_keep     = np.logical_not(np.isnan(Y_simu))
+    Y_ref             = Y_ref[model_to_keep]
+    Y_simu            = Y_simu[model_to_keep]
+    X_simu            = X_simu[model_to_keep]
+    X_simu_AMOC       = X_simu_AMOC[model_to_keep]
+    final_name_samples = final_name_samples[model_to_keep]
+    final_name_models  = np.array(final_name_models)[model_to_keep]
+    X_AMOC_mean_1850_1900   = X_AMOC_mean_1850_1900[model_to_keep]
+
+    #------- When X is multivariate, it can contains the past AMOC (choice in the beginning of this notebook)
+    if include_AMOC_in_predictors:
+        X_simu = np.concatenate((X_simu, X_simu_AMOC.reshape(-1,1)), axis=1)
+        X_obs  = np.concatenate((X_obs, X_obs_AMOC.reshape(-1)))
+        list_name_perFeature.append(name_X_AMOC)
+        list_id_var_perFeature.append(2)
+
+    #------- Average each model on its available members
+    [uniques_models, Y_simu_resampled, Y_ref_resampled, X_simu_resampled, X_simu_AMOC_resampled, X_AMOC_mean_1850_1900_resampled
+            ] = average_member_perModel(final_name_models, X_simu, Y_simu,
+                                Y_ref, X_simu_AMOC, X_AMOC_mean_1850_1900)
+    nb_models = len(uniques_models)
+
+    #------- Rename the final variables
+    X_simu                = X_simu_resampled
+    Y_simu                = Y_simu_resampled
+    Y_ref                 = Y_ref_resampled
+    X_simu_AMOC           = X_simu_AMOC_resampled
+    X_AMOC_mean_1850_1900 = X_AMOC_mean_1850_1900_resampled
+    final_name_models     = np.copy(uniques_models)
+
+    if return_all:
+        print("{} (RAPID) is {:.2f} Sv.".format(name_X_AMOC, X_obs_AMOC))
+        return [X_simu, Y_simu, Y_ref, X_simu_AMOC,
+                X_AMOC_mean_1850_1900, final_name_models,
+                X_obs, X_obs_AMOC, name_X_AMOC, name_Y,
+                mask_perVar, name_perBox, list_idCell_perFeature,
+                list_id_box_perFeature, list_id_var_perFeature,
+                latitudes, longitudes, middle_cell_perBox, lonlat_lim_perBox, list_name_perFeature]
+    else:
+        return [X_simu, Y_simu, Y_ref, X_simu_AMOC,
+                X_AMOC_mean_1850_1900, final_name_models,
+                X_obs, X_obs_AMOC, name_X_AMOC, name_Y]
+
+
+        
 
