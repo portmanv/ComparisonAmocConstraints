@@ -56,16 +56,21 @@ def plot_performances(name_methods, scenario, X_choice, anomalie_Y, name_Y,
                 y2=0*np.ones(2)
                 y1=(pred)*np.ones(2)
 
-            if i==0:
-                linestyle="solid"
-                marker="x"
-                axes[0].fill_between(id_method+shift+np.array([-x,x]), y1=y1, y2=y2,
-                                 color=colors[id_method], alpha=alpha)
+            if id_method!=0:
+                if i==0:
+                    linestyle="solid"
+                    marker="x"
+                    axes[0].fill_between(id_method+shift+np.array([-x,x]), y1=y1, y2=y2,
+                                     color=colors[id_method], alpha=alpha)
+                else:
+                    linestyle="dashed"
+                    marker="o"
+                    axes[0].fill_between(id_method+shift+np.array([-x,x]), y1=y1, y2=y2,
+                                     color="none", hatch="XXX", edgecolor=colors[id_method])
+
             else:
-                linestyle="dashed"
-                marker="o"
-                axes[0].fill_between(id_method+shift+np.array([-x,x]), y1=y1, y2=y2,
-                                 color="none", hatch="XXX", edgecolor=colors[id_method])
+                line0 = axes[0].fill_between(id_method+shift+np.array([-x,x]), y1=y1, y2=y2,
+                                     facecolors='none', edgecolors=colors[id_method], linewidth=2)
 
             axes[0].errorbar(id_method+shift, pred, yerr=z*std_without, capsize=7, color="black", lw=2, alpha=0.8, fmt="_")
 
@@ -79,8 +84,10 @@ def plot_performances(name_methods, scenario, X_choice, anomalie_Y, name_Y,
 
     std  = list_list_std_without[0][0]
     pred = list_list_predictions[0][0]
+       
     line1 = axes[0].fill_between(id_method+np.array([-x,x])+10, y1=(pred-std)*np.ones(2), y2=(pred+std)**np.ones(2),
                                  color="gray", alpha=alpha, label="one predictor")
+    
     line2 = axes[0].fill_between(id_method+np.array([-x,x])+10, y1=(pred-std)*np.ones(2), y2=(pred+std)**np.ones(2),
                                  color="none", hatch="XXX", edgecolor="gray", label="multiple predictor")
     line3 = axes[0].errorbar(id_method+shift+10, pred, yerr=z*std, capsize=7, color="black", lw=2, alpha=0.8, fmt="_")
@@ -102,13 +109,19 @@ def plot_performances(name_methods, scenario, X_choice, anomalie_Y, name_Y,
             else:
                 LOO_err = list_list_LOO[i][id_method]
 
-            if i==0:
-                linestyle="solid"
-                axes[1].fill_between(id_method+shift+np.array([-x,x]), y1=[xmin,xmin], y2=LOO_err*np.array([1,1]), color=colors[id_method], alpha=alpha)
+            if id_method!=0:
+                if i==0:
+                    linestyle="solid"
+                    axes[1].fill_between(id_method+shift+np.array([-x,x]), y1=[xmin,xmin], y2=LOO_err*np.array([1,1]), color=colors[id_method], alpha=alpha)
+                else:
+                    linestyle="dashed"
+                    axes[1].fill_between(id_method+shift+np.array([-x,x]), y1=[xmin,xmin], y2=LOO_err*np.array([1,1]),
+                                         color="none", hatch="XXX", edgecolor=colors[id_method])
             else:
-                linestyle="dashed"
                 axes[1].fill_between(id_method+shift+np.array([-x,x]), y1=[xmin,xmin], y2=LOO_err*np.array([1,1]),
-                                     color="none", hatch="XXX", edgecolor=colors[id_method])
+                                         facecolors='none', edgecolors=colors[id_method], linewidth=2)
+
+                
             if id_method==3 and i==1:
                 axes[1].fill_between(id_method+shift+np.array([-x,x]), y1=xmin*np.ones(2), y2=(LOO_err)*np.ones(2),
                                  facecolors='none', edgecolors='black', linewidth=1)
@@ -123,8 +136,8 @@ def plot_performances(name_methods, scenario, X_choice, anomalie_Y, name_Y,
     axes[0].set_title("A. Constrained projections")
     axes[1].set_title("B. Cross-validation performances")
     plt.rc('axes', axisbelow=True)
-    leg = fig.legend([line1, line2, line3],
-               ["one observed variable", "multiple observed variables", r"$\pm$"+" 90% empirical uncertainty"], #"1 "+r"$\sigma$"+" interval"],
+    leg = fig.legend([line1, line2, line0, line3],
+               ["one observed variable", "multiple observed variables", "Unconstrained", r"$\pm$"+" 90% empirical uncertainty"], #"1 "+r"$\sigma$"+" interval"],
                title="Constrained by", loc='center left', bbox_to_anchor=(0.9, 0.5))
     leg._legend_box.align = "left"
     axes[1].get_xticklabels()[3].set_fontweight("bold")
