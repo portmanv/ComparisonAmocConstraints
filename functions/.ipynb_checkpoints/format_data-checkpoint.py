@@ -144,6 +144,7 @@ def average_member_perModel(final_name_models, X_simu, Y_simu,
     return uniques_models, Y_simu_resampled, Y_ref_resampled, X_simu_resampled, X_simu_AMOC_resampled, X_AMOC_mean_1850_1900_resampled
 
 
+
 def construct_data_given_scenario(scenario,
                                  X_choice, anomalie_Y, min_Y, max_Y,
                                  min_Y_ref, max_Y_ref, min_X, max_X,
@@ -243,7 +244,8 @@ def construct_data_given_scenario(scenario,
                 X_obs, X_obs_AMOC, name_X_AMOC, name_Y,
                 mask_perVar, name_perBox, list_idCell_perFeature,
                 list_id_box_perFeature, list_id_var_perFeature,
-                latitudes, longitudes, middle_cell_perBox, lonlat_lim_perBox, list_name_perFeature]
+                latitudes, longitudes, middle_cell_perBox, lonlat_lim_perBox, list_name_perFeature,
+                final_weight_per_sample, final_name_samples]
     else:
         return [X_simu, Y_simu, Y_ref, X_simu_AMOC,
                 X_AMOC_mean_1850_1900, final_name_models,

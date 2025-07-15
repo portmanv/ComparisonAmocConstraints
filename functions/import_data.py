@@ -6,8 +6,7 @@ from functions import display_map, nanaverage, nanstd
 prop_cycle = plt.rcParams['axes.prop_cycle']
 
 
-def import_CMIP6_TOS_SOS(scenario, years_to_select):
-    list_name_per_var = ["tos", "sos"]
+def import_CMIP6_TOS_SOS(scenario, years_to_select, list_name_per_var=["tos", "sos"]): 
 
     nb_var = len(list_name_per_var)
     data_perVar           = []
