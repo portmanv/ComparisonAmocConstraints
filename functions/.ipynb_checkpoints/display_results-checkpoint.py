@@ -128,7 +128,7 @@ def plot_performances(name_methods, scenario, X_choice, anomalie_Y, name_Y,
 
 
     axes[0].set_ylabel(name_Y+" (Sv)")
-    axes[1].set_ylabel("Mean leave-one-out error")
+    axes[1].set_ylabel("Leave-one-out error")
     axes[1].set_xticks(range(nb_methods))
     axes[1].set_xticklabels(name_methods)
     axes[0].grid(axis="y")
@@ -137,7 +137,7 @@ def plot_performances(name_methods, scenario, X_choice, anomalie_Y, name_Y,
     axes[1].set_title("B. Cross-validation performances")
     plt.rc('axes', axisbelow=True)
     leg = fig.legend([line1, line2, line0, line3],
-               ["one observed variable", "multiple observed variables", "Unconstrained", r"$\pm$"+" 90% empirical uncertainty"], #"1 "+r"$\sigma$"+" interval"],
+               ["one observed variable", "multiple observed variables", "Unconstrained", r"$\pm$"+" 90% model uncertainty"], #"1 "+r"$\sigma$"+" interval"],
                title="Constrained by", loc='center left', bbox_to_anchor=(0.9, 0.5))
     leg._legend_box.align = "left"
     axes[1].get_xticklabels()[3].set_fontweight("bold")
